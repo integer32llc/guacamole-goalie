@@ -34,9 +34,28 @@ fn main() {
              .help("the name of the recipe to create")
              .required(true));
 
+    let add_ingredient_cmd = SubCommand::with_name("add-ingredient")
+        .about("Add an ingredient to a recipe")
+        .arg(Arg::with_name("recipe")
+             .long("recipe")
+             .takes_value(true)
+             .help("the name of the recipe to add an ingredient to")
+             .required(true))
+        .arg(Arg::with_name("amount")
+             .long("amount")
+             .takes_value(true)
+             .help("the amount of the ingredient in the recipe")
+             .required(true))
+        .arg(Arg::with_name("name")
+             .long("name")
+             .takes_value(true)
+             .help("the name of the ingredient to add")
+             .required(true));
+
     let matches = App::new("guacamole-goalie")
         .subcommand(list_recipes_cmd)
         .subcommand(add_recipe_cmd)
+        .subcommand(add_ingredient_cmd)
         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("list-recipes") {
@@ -45,6 +64,10 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("add-recipe") {
         add_recipe(matches)
+    }
+
+    if let Some(matches) = matches.subcommand_matches("add-ingredient") {
+        add_ingredient(matches)
     }
 }
 
@@ -75,4 +98,17 @@ fn add_recipe(matches: &clap::ArgMatches) {
         .values(&name.eq(name_arg_value))
         .execute(&connection)
         .expect("Could not insert recipe");
+}
+
+fn add_ingredient(matches: &clap::ArgMatches) {
+    let recipe_arg_value = matches.value_of("recipe")
+        .expect("Recipe name required");
+
+    let ingredient_amount_value = matches.value_of("amount")
+        .expect("Ingredient amount required");
+
+    let ingredient_name_value = matches.value_of("name")
+        .expect("Ingredient name required");
+
+    println!("Going to add {} {} to recipe {}", ingredient_amount_value, ingredient_name_value, recipe_arg_value);
 }
