@@ -20,5 +20,16 @@ mod schema;
 mod models;
 
 fn main() {
-    println!("Hello, world!");
+    use schema::recipes::dsl::*;
+
+    let connection = establish_connection();
+    let results = recipes
+        .limit(5)
+        .load::<models::Recipe>(&connection)
+        .expect("Error loading recipes");
+
+    println!("Displaying {} recipes", results.len());
+    for recipe in results {
+        println!("{}", recipe.name);
+    }
 }
