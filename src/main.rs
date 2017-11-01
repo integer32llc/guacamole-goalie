@@ -17,6 +17,7 @@ pub fn establish_connection() -> PgConnection {
 }
 
 mod schema;
+mod models;
 
 fn main() {
     println!("Hello, world!");
