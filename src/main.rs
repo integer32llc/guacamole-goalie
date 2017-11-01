@@ -21,7 +21,7 @@ pub fn establish_connection() -> PgConnection {
 mod schema;
 mod models;
 
-use models::Recipe;
+use models::{Recipe, Ingredient};
 
 fn main() {
 
@@ -54,10 +54,19 @@ fn main() {
              .help("the name of the ingredient to add")
              .required(true));
 
+    let show_recipe_cmd = SubCommand::with_name("show-recipe")
+        .about("Show the recipe with the specified name")
+        .arg(Arg::with_name("recipe")
+             .long("recipe")
+             .takes_value(true)
+             .help("the name of the recipe to show")
+             .required(true));
+
     let matches = App::new("guacamole-goalie")
         .subcommand(list_recipes_cmd)
         .subcommand(add_recipe_cmd)
         .subcommand(add_ingredient_cmd)
+        .subcommand(show_recipe_cmd)
         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("list-recipes") {
@@ -71,6 +80,11 @@ fn main() {
     if let Some(matches) = matches.subcommand_matches("add-ingredient") {
         add_ingredient(matches)
     }
+
+    if let Some(matches) = matches.subcommand_matches("show-recipe") {
+        show_recipe(matches)
+    }
+
 }
 
 fn list_recipes(_matches: &clap::ArgMatches) {
@@ -131,4 +145,28 @@ fn add_ingredient(matches: &clap::ArgMatches) {
         .expect("Could not insert ingredient");
 
     println!("Added {} {} to recipe {}", ingredient_amount_value, ingredient_name_value, recipe_arg_value);
+}
+
+fn show_recipe(matches: &clap::ArgMatches) {
+    let recipe_arg_value = matches.value_of("recipe")
+        .expect("Recipe name required");
+
+    use schema::recipes;
+
+    let connection = establish_connection();
+
+    let recipe = recipes::table
+        .filter(recipes::name.eq(recipe_arg_value))
+        .first::<Recipe>(&connection)
+        .expect("Could not find recipe");
+
+    println!("# {}\n", recipe.name);
+
+    let ingredients = Ingredient::belonging_to(&recipe)
+        .load::<Ingredient>(&connection)
+        .expect("Could not load ingredients");
+
+    for ingredient in ingredients {
+        println!("* {} {}", ingredient.amount, ingredient.name);
+    }
 }
