@@ -112,16 +112,23 @@ fn add_ingredient(matches: &clap::ArgMatches) {
     let ingredient_name_value = matches.value_of("name")
         .expect("Ingredient name required");
 
-    use schema::recipes::dsl::*;
+    use schema::{recipes, ingredients};
 
     let connection = establish_connection();
 
-    let recipe = recipes
-        .filter(name.eq(recipe_arg_value))
+    let recipe = recipes::table
+        .filter(recipes::name.eq(recipe_arg_value))
         .first::<Recipe>(&connection)
         .expect("Could not find recipe");
 
-    println!("Recipe id {}", recipe.id);
+    diesel::insert_into(ingredients::table)
+        .values(&(
+            ingredients::name.eq(ingredient_name_value),
+            ingredients::amount.eq(ingredient_amount_value),
+            ingredients::recipe_id.eq(recipe.id)
+        ))
+        .execute(&connection)
+        .expect("Could not insert ingredient");
 
-    println!("Going to add {} {} to recipe {}", ingredient_amount_value, ingredient_name_value, recipe_arg_value);
+    println!("Added {} {} to recipe {}", ingredient_amount_value, ingredient_name_value, recipe_arg_value);
 }
