@@ -21,6 +21,8 @@ pub fn establish_connection() -> PgConnection {
 mod schema;
 mod models;
 
+use models::Recipe;
+
 fn main() {
 
     let list_recipes_cmd = SubCommand::with_name("list-recipes")
@@ -77,7 +79,7 @@ fn list_recipes(_matches: &clap::ArgMatches) {
     let connection = establish_connection();
     let results = recipes
         .limit(5)
-        .load::<models::Recipe>(&connection)
+        .load::<Recipe>(&connection)
         .expect("Error loading recipes");
 
     println!("Displaying {} recipes", results.len());
@@ -109,6 +111,17 @@ fn add_ingredient(matches: &clap::ArgMatches) {
 
     let ingredient_name_value = matches.value_of("name")
         .expect("Ingredient name required");
+
+    use schema::recipes::dsl::*;
+
+    let connection = establish_connection();
+
+    let recipe = recipes
+        .filter(name.eq(recipe_arg_value))
+        .first::<Recipe>(&connection)
+        .expect("Could not find recipe");
+
+    println!("Recipe id {}", recipe.id);
 
     println!("Going to add {} {} to recipe {}", ingredient_amount_value, ingredient_name_value, recipe_arg_value);
 }
