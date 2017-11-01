@@ -1,0 +1,6 @@
+CREATE TABLE ingredients (
+    id SERIAL PRIMARY KEY,
+    amount VARCHAR NOT NULL,
+    name VARCHAR NOT NULL,
+    recipe_id INTEGER NOT NULL REFERENCES recipes (id) ON DELETE CASCADE
+);
